@@ -144,6 +144,7 @@ bool GPRS::sendSMS(char *number, char *data)
     sim900_send_cmd(data);
     delay(500);
     sim900_send_End_Mark();
+    sim900_wait_for_resp("OK\r\n", CMD);
     return true;
   }
 
@@ -151,7 +152,6 @@ bool GPRS::sendSMS(char *number, char *data)
   {
     char gprsBuffer[48];  //48 is enough to see +CMGL:
     char *s;
-    
 
     //List of all UNREAD SMS and DON'T change the SMS UNREAD STATUS
     sim900_send_cmd(F("AT+CMGL=\"REC UNREAD\",1\r\n"));
