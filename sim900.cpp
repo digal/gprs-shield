@@ -144,6 +144,7 @@ void sim900_send_End_Mark(void)
 
 boolean sim900_wait_for_resp(const char* resp, DataType type, unsigned int timeout, unsigned int chartimeout)
 {
+    // Serial.print("++ sim900_wait_for_resp: "); Serial.println(resp);
     int len = strlen(resp);
     int sum = 0;
     unsigned long timerStart, prevChar;    //prevChar is the time when the previous Char has been read.
@@ -152,21 +153,26 @@ boolean sim900_wait_for_resp(const char* resp, DataType type, unsigned int timeo
     while(1) {
         if(sim900_check_readable()) {
             char c = serialSIM900->read();
+            // Serial.print(c);
             prevChar = millis();
             sum = (c==resp[sum]) ? sum+1 : 0;
             if(sum == len)break;
         }
         if ((unsigned long) (millis() - timerStart) > timeout * 1000UL) {
+            // Serial.print("-- sim900_wait_for_resp (TIMEOUT): "); Serial.println(resp);
             return false;
         }
         //If interchar Timeout => return FALSE. So we can return sooner from this function.
         if (((unsigned long) (millis() - prevChar) > chartimeout) && (prevChar != 0)) {
+            // Serial.print("-- sim900_wait_for_resp (CHAR TIMEOUT): "); Serial.println(resp);
             return false;
         }
         
     }
     //If is a CMD, we will finish to read buffer.
     if(type == CMD) sim900_flush_serial();
+    Serial.print("-- sim900_wait_for_resp: "); Serial.println(resp);
+
     return true;   
 }
 

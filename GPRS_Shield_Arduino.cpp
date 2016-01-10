@@ -140,10 +140,11 @@ bool GPRS::sendSMS(char *number, char *data)
     if(!sim900_check_with_cmd("\"\r\n",">",CMD)) {
       return false;
     }
-    delay(1000);
+    delay(500);
     sim900_send_cmd(data);
     delay(500);
     sim900_send_End_Mark();
+    delay(500);
     sim900_wait_for_resp("OK\r\n", CMD);
     return true;
   }
@@ -215,8 +216,8 @@ bool GPRS::sendSMS(char *number, char *data)
         return -1;
       }
 
-      bool GPRS::readSMS(int messageIndex, char *message, int length, char *phone, char *datetime)  
-      {
+bool GPRS::readSMS(int messageIndex, char *message, int length, char *phone, char *datetime)  
+{
   /* Response is like:
   AT+CMGR=2
   
@@ -276,40 +277,10 @@ bool GPRS::sendSMS(char *number, char *data)
           }
           message[i] = '\0';
         }
+        sim900_flush_serial();
         return true;
       }
       return false;    
-    }
-
-    bool GPRS::readSMS(int messageIndex, char *message,int length)
-    {
-      int i = 0;
-      char gprsBuffer[100];
-    //char cmd[16];
-      char num[4];
-      char *p,*s;
-
-      sim900_check_with_cmd("AT+CMGF=1\r\n","OK\r\n",CMD);
-      delay(1000);
-      sim900_send_cmd("AT+CMGR=");
-      itoa(messageIndex, num, 10);
-      sim900_send_cmd(num);
-      sim900_send_cmd("\r\n");
-//  sprintf(cmd,"AT+CMGR=%d\r\n",messageIndex);
-//    sim900_send_cmd(cmd);
-      sim900_clean_buffer(gprsBuffer,sizeof(gprsBuffer));
-      sim900_read_buffer(gprsBuffer,sizeof(gprsBuffer),DEFAULT_TIMEOUT);
-      if(NULL != ( s = strstr(gprsBuffer,"+CMGR:"))){
-        if(NULL != ( s = strstr(s,"\r\n"))){
-          p = s + 2;
-          while((*p != '\r')&&(i < length-1)) {
-            message[i++] = *(p++);
-          }
-          message[i] = '\0';
-          return true;
-        }
-      }
-      return false;   
     }
 
     bool GPRS::deleteSMS(int index)
@@ -321,11 +292,8 @@ bool GPRS::sendSMS(char *number, char *data)
      itoa(index, num, 10);
      sim900_send_cmd(num);
 	//snprintf(cmd,sizeof(cmd),"AT+CMGD=%d\r\n",index);
-    //sim900_send_cmd(cmd);
-    //return 0;
     // We have to wait OK response
-	//return sim900_check_with_cmd(cmd,"OK\r\n",CMD);
-     return sim900_check_with_cmd("\r\n","OK\r\n",CMD);	
+     return sim900_check_with_cmd(",1\r\n","OK\r\n",CMD);	
    }
 
    bool GPRS::callUp(char *number)
@@ -481,17 +449,19 @@ bool GPRS::sendSMS(char *number, char *data)
     }
 
     byte GPRS::getSignalStrength() {
-      //AT+CSQ: 00,00     --> 13 + CRLF = 15
+      //AT+CSQ            --> 6 + CRLF = 8
       //                  --> CRLF     = 2
+      //+CSQ: 00,00       --> 11 + CRLF = 13
       //OK                --> 2 + CRLF = 4
 
 
         byte result = 99;
-        char gprsBuffer[21];
-        sim900_clean_buffer(gprsBuffer,21);
+        char gprsBuffer[22];
+        sim900_clean_buffer(gprsBuffer,22);
         char *s;
         sim900_send_cmd("AT+CSQ\r\n");
         sim900_read_buffer(gprsBuffer,21,DEFAULT_TIMEOUT);
+        // Serial.println(gprsBuffer);
         if(NULL != ( s = strstr(gprsBuffer,"+CSQ: "))) {
             result = atoi(s+6);
             sim900_wait_for_resp("OK\r\n", CMD);        

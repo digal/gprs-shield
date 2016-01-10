@@ -114,16 +114,6 @@ public:
      */
     bool readSMS(int messageIndex, char *message, int length, char *phone, char *datetime); 
 
-    /** read SMS if getting a SMS message
-     *  @param  buffer  buffer that get from GPRS module(when getting a SMS, GPRS module will return a buffer array)
-     *  @param  message buffer used to get SMS message
-     *  @param  check   whether to check phone number(we may only want to read SMS from specified phone number)
-     *  @returns
-     *      true on success
-     *      false on error
-     */
-    bool readSMS(int messageIndex, char *message, int length);
-
     /** delete SMS message on SIM card
      *  @param  index   the index number which SMS message will be delete
      *  @returns
